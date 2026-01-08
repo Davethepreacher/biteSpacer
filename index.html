@@ -29,6 +29,8 @@
       --light-red-glow: rgba(239, 68, 68, 0.5);
       --light-orange: #f97316;
       --light-orange-glow: rgba(249, 115, 22, 0.5);
+      --light-green: #22c55e;
+      --light-green-glow: rgba(34, 197, 94, 0.5);
       --timer-normal: #f0f0f5;
       --timer-warning: #f97316;
       --timer-danger: #ef4444;
@@ -153,12 +155,18 @@
         inset 0 0 30px rgba(255, 255, 255, 0.2);
     }
 
+    .bite-btn.ready {
+      background: var(--light-green);
+      box-shadow: 
+        0 0 80px 30px var(--light-green-glow),
+        0 0 120px 60px rgba(34, 197, 94, 0.2),
+        inset 0 0 30px rgba(255, 255, 255, 0.2);
+    }
+
     .bite-btn.disabled {
       cursor: not-allowed;
       opacity: 0.5;
     }
-
-    /* Status message */
     .status-message {
       font-size: 1rem;
       font-weight: 400;
@@ -290,26 +298,6 @@
       opacity: 0.6;
     }
 
-    /* Animations */
-    @keyframes pulse {
-      0%, 100% { 
-        box-shadow: 
-          0 0 80px 30px var(--light-red-glow),
-          0 0 120px 60px rgba(239, 68, 68, 0.2),
-          inset 0 0 30px rgba(255, 255, 255, 0.2);
-      }
-      50% { 
-        box-shadow: 
-          0 0 100px 40px var(--light-red-glow),
-          0 0 150px 80px rgba(239, 68, 68, 0.3),
-          inset 0 0 40px rgba(255, 255, 255, 0.3);
-      }
-    }
-
-    .bite-btn.blinking {
-      animation: pulse 0.5s ease-in-out infinite;
-    }
-
     /* Safe area for notched phones */
     @supports (padding: env(safe-area-inset-top)) {
       .header {
@@ -368,7 +356,8 @@
     let isLunchStarted = false;
     let isPaused = false;
     let isBlinking = false;
-    let timerSeconds = 0;
+    let startTime = null;
+    let pausedTime = 0;
     let timerInterval = null;
     let blinkInterval = null;
     let blinkTimeout = null;
@@ -380,8 +369,15 @@
       return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
+    // Get elapsed seconds
+    function getElapsedSeconds() {
+      if (!startTime) return 0;
+      return Math.floor((Date.now() - startTime) / 1000);
+    }
+
     // Update timer display and color based on time
     function updateTimerDisplay() {
+      const timerSeconds = getElapsedSeconds();
       timerDisplay.textContent = formatTime(timerSeconds);
       
       const minutes = timerSeconds / 60;
@@ -398,11 +394,12 @@
     function startLunch() {
       isLunchStarted = true;
       isPaused = false;
-      timerSeconds = 0;
+      startTime = Date.now();
       
       startBtn.textContent = 'Stop';
       startBtn.classList.add('active');
       biteBtn.classList.remove('disabled');
+      biteBtn.classList.add('ready');
       
       statusMessage.textContent = 'Tap the button after each bite';
       statusMessage.classList.add('visible');
@@ -414,7 +411,6 @@
       updateTimerDisplay();
       
       timerInterval = setInterval(() => {
-        timerSeconds++;
         updateTimerDisplay();
       }, 1000);
     }
@@ -423,6 +419,8 @@
     function stopLunch() {
       isLunchStarted = false;
       isPaused = false;
+      startTime = null;
+      pausedTime = 0;
       
       if (timerInterval) {
         clearInterval(timerInterval);
@@ -434,6 +432,10 @@
       startBtn.textContent = 'Start Lunch';
       startBtn.classList.remove('active');
       biteBtn.classList.add('disabled');
+      biteBtn.classList.remove('ready');
+      
+      timerDisplay.textContent = '00:00';
+      timerDisplay.classList.remove('warning', 'danger');
       
       statusMessage.textContent = 'Press "Start Lunch" to begin';
       statusMessage.classList.remove('visible', 'waiting');
@@ -445,6 +447,7 @@
     // Pause timer for modal
     function pauseTimer() {
       isPaused = true;
+      pausedTime = Date.now() - startTime;
       if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
@@ -454,8 +457,8 @@
     // Resume timer after modal
     function resumeTimer() {
       isPaused = false;
+      startTime = Date.now() - pausedTime;
       timerInterval = setInterval(() => {
-        timerSeconds++;
         updateTimerDisplay();
       }, 1000);
     }
@@ -477,25 +480,20 @@
       
       isBlinking = true;
       
-      biteBtn.classList.add('on', 'blinking');
+      biteBtn.classList.remove('ready');
+      biteBtn.classList.add('on');
       statusMessage.textContent = 'Wait for the next bite';
       statusMessage.classList.add('visible', 'waiting');
       
       tipMessage.classList.remove('visible');
       
-      let lightOn = true;
-      
       blinkInterval = setInterval(() => {
-        lightOn = !lightOn;
-        if (lightOn) {
-          biteBtn.classList.add('on');
-        } else {
-          biteBtn.classList.remove('on');
-        }
+        biteBtn.classList.toggle('on');
       }, 500);
       
       blinkTimeout = setTimeout(() => {
         stopBlinking();
+        biteBtn.classList.add('ready');
         statusMessage.textContent = 'Ready for your next bite';
         statusMessage.classList.remove('waiting');
         
@@ -516,7 +514,7 @@
       }
       
       isBlinking = false;
-      biteBtn.classList.remove('on', 'blinking');
+      biteBtn.classList.remove('on');
     }
 
     // Event listeners
@@ -567,6 +565,13 @@
       if (timerInterval) clearInterval(timerInterval);
       if (blinkInterval) clearInterval(blinkInterval);
       if (blinkTimeout) clearTimeout(blinkTimeout);
+    });
+
+    // Update timer when page becomes visible again (after phone sleep)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && isLunchStarted && !isPaused) {
+        updateTimerDisplay();
+      }
     });
   </script>
 </body>
