@@ -1,149 +1,572 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>BiteSpacer- A simple counter that tracks every bite you take — and helps you lose weight.</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>BiteSpacer – Mindful Eating Timer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    /* Layout global */
-    body {
+    * {
       margin: 0;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #111827; /* bg-gray-900 */
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .container {
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --text-primary: #f0f0f5;
+      --text-muted: #6b6b7a;
+      --accent-blue: #3b82f6;
+      --accent-blue-glow: rgba(59, 130, 246, 0.4);
+      --light-off: #1a1a24;
+      --light-red: #ef4444;
+      --light-red-glow: rgba(239, 68, 68, 0.5);
+      --light-orange: #f97316;
+      --light-orange-glow: rgba(249, 115, 22, 0.5);
+      --timer-normal: #f0f0f5;
+      --timer-warning: #f97316;
+      --timer-danger: #ef4444;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Outfit', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
       display: flex;
       flex-direction: column;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
       align-items: center;
+      padding: 1.5rem 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .timer-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(2rem, 8vw, 3rem);
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      transition: color 0.5s ease;
+    }
+
+    .timer-display.warning {
+      color: var(--timer-warning);
+    }
+
+    .timer-display.danger {
+      color: var(--timer-danger);
+    }
+
+    .start-btn {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.75rem 1.25rem;
+      background: var(--bg-secondary);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .start-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .start-btn:active {
+      transform: scale(0.98);
+    }
+
+    .start-btn.active {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+    }
+
+    /* Main content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
       gap: 2rem;
     }
 
-    /* La "lumière" */
-    .light {
-      width: 8rem;    /* équivalent w-32 */
-      height: 8rem;   /* équivalent h-32 */
-      border-radius: 9999px;
-      transition: all 0.2s ease;
-      background: #450a0a; /* bg-red-950 */
-      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.7);
+    /* Bite button */
+    .bite-btn-container {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    .light.on {
-      background: #dc2626; /* bg-red-600 */
-      box-shadow: 0 0 60px 20px rgba(220, 38, 38, 0.6);
-    }
-
-    /* Bouton */
-    button {
-      padding: 1rem 2.5rem;  /* px-8 py-4 */
-      font-size: 1.125rem;   /* text-lg */
-      font-weight: 600;
-      border-radius: 0.5rem; /* rounded-lg */
+    .bite-btn {
+      width: clamp(140px, 40vw, 200px);
+      height: clamp(140px, 40vw, 200px);
+      border-radius: 50%;
       border: none;
       cursor: pointer;
-      transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease, color 0.15s ease;
+      background: var(--light-off);
+      box-shadow: 
+        inset 0 0 30px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
 
-    button.primary {
-      background: #2563eb; /* bg-blue-600 */
-      color: white;
-      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+    .bite-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1) 0%, transparent 50%);
     }
 
-    button.primary:hover {
-      background: #1d4ed8; /* bg-blue-700 */
-      transform: translateY(-1px);
-      box-shadow: 0 14px 30px rgba(37, 99, 235, 0.5);
+    .bite-btn.on {
+      background: var(--light-red);
+      box-shadow: 
+        0 0 80px 30px var(--light-red-glow),
+        0 0 120px 60px rgba(239, 68, 68, 0.2),
+        inset 0 0 30px rgba(255, 255, 255, 0.2);
     }
 
-    button.primary:active {
-      background: #1e40af; /* bg-blue-800 */
-      transform: translateY(0);
-      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
-    }
-
-    button.disabled {
-      background: #4b5563; /* bg-gray-600 */
-      color: #9ca3af;      /* text-gray-400 */
+    .bite-btn.disabled {
       cursor: not-allowed;
-      box-shadow: none;
-      transform: none;
+      opacity: 0.5;
+    }
+
+    /* Status message */
+    .status-message {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      text-align: center;
+      min-height: 1.5rem;
+      transition: all 0.3s ease;
+      opacity: 0;
+    }
+
+    .status-message.visible {
+      opacity: 1;
+      color: var(--text-primary);
+    }
+
+    .status-message.waiting {
+      color: var(--light-red);
+    }
+
+    .tip-message {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 280px;
+      line-height: 1.4;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .tip-message.visible {
+      opacity: 1;
+    }
+
+    /* Modal overlay */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+
+    .modal-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 320px;
+      width: 100%;
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.visible .modal {
+      transform: scale(1);
+    }
+
+    .modal h2 {
+      font-size: 1.25rem;
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+    }
+
+    .modal p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .modal-btn {
+      flex: 1;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.875rem 1rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .modal-btn.cancel {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+    }
+
+    .modal-btn.cancel:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .modal-btn.confirm {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    .modal-btn.confirm:hover {
+      background: #2563eb;
+    }
+
+    /* Footer stats */
+    .footer {
+      padding: 1.5rem;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .copyright {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    /* Animations */
+    @keyframes pulse {
+      0%, 100% { 
+        box-shadow: 
+          0 0 80px 30px var(--light-red-glow),
+          0 0 120px 60px rgba(239, 68, 68, 0.2),
+          inset 0 0 30px rgba(255, 255, 255, 0.2);
+      }
+      50% { 
+        box-shadow: 
+          0 0 100px 40px var(--light-red-glow),
+          0 0 150px 80px rgba(239, 68, 68, 0.3),
+          inset 0 0 40px rgba(255, 255, 255, 0.3);
+      }
+    }
+
+    .bite-btn.blinking {
+      animation: pulse 0.5s ease-in-out infinite;
+    }
+
+    /* Safe area for notched phones */
+    @supports (padding: env(safe-area-inset-top)) {
+      .header {
+        padding-top: calc(1.5rem + env(safe-area-inset-top));
+        padding-left: calc(1.25rem + env(safe-area-inset-left));
+        padding-right: calc(1.25rem + env(safe-area-inset-right));
+      }
+      .footer {
+        padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div id="light" class="light"></div>
+  <header class="header">
+    <div id="timerDisplay" class="timer-display">00:00</div>
+    <button id="startBtn" class="start-btn">Start Lunch</button>
+  </header>
 
-    <button id="toggleButton" class="primary">
-      Démarrer
-    </button>
+  <main class="main-content">
+    <div class="bite-btn-container">
+      <button id="biteBtn" class="bite-btn disabled"></button>
+    </div>
+    <p id="statusMessage" class="status-message">Press "Start Lunch" to begin</p>
+    <p id="tipMessage" class="tip-message"></p>
+  </main>
+
+  <footer class="footer">
+    <p class="copyright">Bite Spacer by David Raichman © 2026</p>
+  </footer>
+
+  <!-- Restart Modal -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <h2>Restart Lunch?</h2>
+      <p>Your current session will be reset. Do you want to start again?</p>
+      <div class="modal-buttons">
+        <button id="modalCancel" class="modal-btn cancel">Resume</button>
+        <button id="modalConfirm" class="modal-btn confirm">Restart</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    const lightEl = document.getElementById('light');
-    const buttonEl = document.getElementById('toggleButton');
+    // Elements
+    const timerDisplay = document.getElementById('timerDisplay');
+    const startBtn = document.getElementById('startBtn');
+    const biteBtn = document.getElementById('biteBtn');
+    const statusMessage = document.getElementById('statusMessage');
+    const tipMessage = document.getElementById('tipMessage');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalCancel = document.getElementById('modalCancel');
+    const modalConfirm = document.getElementById('modalConfirm');
 
+    // State
+    let isLunchStarted = false;
+    let isPaused = false;
     let isBlinking = false;
-    let isLightOn = false;
-    let intervalId = null;
-    let timeoutId = null;
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let blinkInterval = null;
+    let blinkTimeout = null;
 
-    function setButtonState(blinking) {
-      if (blinking) {
-        buttonEl.textContent = 'Clignotement en cours...';
-        buttonEl.classList.add('disabled');
-        buttonEl.classList.remove('primary');
-        buttonEl.disabled = true;
-      } else {
-        buttonEl.textContent = 'Démarrer';
-        buttonEl.classList.remove('disabled');
-        buttonEl.classList.add('primary');
-        buttonEl.disabled = false;
+    // Format time as MM:SS
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Update timer display and color based on time
+    function updateTimerDisplay() {
+      timerDisplay.textContent = formatTime(timerSeconds);
+      
+      const minutes = timerSeconds / 60;
+      timerDisplay.classList.remove('warning', 'danger');
+      
+      if (minutes >= 25) {
+        timerDisplay.classList.add('danger');
+      } else if (minutes >= 20) {
+        timerDisplay.classList.add('warning');
       }
     }
 
-    function updateLight(on) {
-      isLightOn = on;
-      if (on) {
-        lightEl.classList.add('on');
-      } else {
-        lightEl.classList.remove('on');
+    // Start the lunch timer
+    function startLunch() {
+      isLunchStarted = true;
+      isPaused = false;
+      timerSeconds = 0;
+      
+      startBtn.textContent = 'Stop';
+      startBtn.classList.add('active');
+      biteBtn.classList.remove('disabled');
+      
+      statusMessage.textContent = 'Tap the button after each bite';
+      statusMessage.classList.add('visible');
+      statusMessage.classList.remove('waiting');
+      
+      tipMessage.textContent = 'Make sure to savor and chew your bite for at least 10 seconds';
+      tipMessage.classList.add('visible');
+      
+      updateTimerDisplay();
+      
+      timerInterval = setInterval(() => {
+        timerSeconds++;
+        updateTimerDisplay();
+      }, 1000);
+    }
+
+    // Stop the lunch timer
+    function stopLunch() {
+      isLunchStarted = false;
+      isPaused = false;
+      
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      
+      stopBlinking();
+      
+      startBtn.textContent = 'Start Lunch';
+      startBtn.classList.remove('active');
+      biteBtn.classList.add('disabled');
+      
+      statusMessage.textContent = 'Press "Start Lunch" to begin';
+      statusMessage.classList.remove('visible', 'waiting');
+      
+      tipMessage.textContent = '';
+      tipMessage.classList.remove('visible');
+    }
+
+    // Pause timer for modal
+    function pauseTimer() {
+      isPaused = true;
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
       }
     }
 
+    // Resume timer after modal
+    function resumeTimer() {
+      isPaused = false;
+      timerInterval = setInterval(() => {
+        timerSeconds++;
+        updateTimerDisplay();
+      }, 1000);
+    }
+
+    // Show restart modal
+    function showModal() {
+      pauseTimer();
+      modalOverlay.classList.add('visible');
+    }
+
+    // Hide modal
+    function hideModal() {
+      modalOverlay.classList.remove('visible');
+    }
+
+    // Start blinking
     function startBlinking() {
-      if (isBlinking) return;
-
+      if (isBlinking || !isLunchStarted) return;
+      
       isBlinking = true;
-      setButtonState(true);
-      updateLight(true);
-
-      // Clignote toutes les 500 ms
-      intervalId = setInterval(() => {
-        updateLight(!isLightOn);
+      
+      biteBtn.classList.add('on', 'blinking');
+      statusMessage.textContent = 'Wait for the next bite';
+      statusMessage.classList.add('visible', 'waiting');
+      
+      tipMessage.classList.remove('visible');
+      
+      let lightOn = true;
+      
+      blinkInterval = setInterval(() => {
+        lightOn = !lightOn;
+        if (lightOn) {
+          biteBtn.classList.add('on');
+        } else {
+          biteBtn.classList.remove('on');
+        }
       }, 500);
-
-      // Stop après 10 secondes
-      timeoutId = setTimeout(() => {
-        clearInterval(intervalId);
-        intervalId = null;
-        isBlinking = false;
-        updateLight(false);
-        setButtonState(false);
+      
+      blinkTimeout = setTimeout(() => {
+        stopBlinking();
+        statusMessage.textContent = 'Ready for your next bite';
+        statusMessage.classList.remove('waiting');
+        
+        tipMessage.textContent = 'Make sure to savor and chew your bite for at least 10 seconds';
+        tipMessage.classList.add('visible');
       }, 15000);
     }
 
-    buttonEl.addEventListener('click', startBlinking);
+    // Stop blinking
+    function stopBlinking() {
+      if (blinkInterval) {
+        clearInterval(blinkInterval);
+        blinkInterval = null;
+      }
+      if (blinkTimeout) {
+        clearTimeout(blinkTimeout);
+        blinkTimeout = null;
+      }
+      
+      isBlinking = false;
+      biteBtn.classList.remove('on', 'blinking');
+    }
 
-    // Nettoyage si jamais tu voulais réutiliser ce script dans un contexte plus complexe
+    // Event listeners
+    startBtn.addEventListener('click', () => {
+      if (!isLunchStarted) {
+        startLunch();
+      } else {
+        showModal();
+      }
+    });
+
+    biteBtn.addEventListener('click', () => {
+      if (!biteBtn.classList.contains('disabled') && !isBlinking) {
+        startBlinking();
+      }
+    });
+
+    modalCancel.addEventListener('click', () => {
+      hideModal();
+      resumeTimer();
+    });
+
+    modalConfirm.addEventListener('click', () => {
+      hideModal();
+      stopLunch();
+      startLunch();
+    });
+
+    // Close modal on overlay click
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        hideModal();
+        resumeTimer();
+      }
+    });
+
+    // Prevent zoom on double tap
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - (document.lastTouchEnd || 0) < 300) {
+        e.preventDefault();
+      }
+      document.lastTouchEnd = now;
+    }, { passive: false });
+
+    // Cleanup
     window.addEventListener('beforeunload', () => {
-      if (intervalId) clearInterval(intervalId);
-      if (timeoutId) clearTimeout(timeoutId);
+      if (timerInterval) clearInterval(timerInterval);
+      if (blinkInterval) clearInterval(blinkInterval);
+      if (blinkTimeout) clearTimeout(blinkTimeout);
     });
   </script>
 </body>
