@@ -741,7 +741,7 @@
       isPaused = false;
       startTime = Date.now();
       biteTimestamps = [];
-      readyTimestamps = []; // Don't add initial ready timestamp - wait for first bite
+      readyTimestamps = [Date.now()]; // First ready moment is when lunch starts
       
       startBtn.textContent = 'Restart';
       startBtn.classList.add('active');
@@ -842,18 +842,19 @@
       
       // Calculate average chewing time
       // Chewing time = time between button turning green and next button press
-      // Only count intervals after the first bite (readyTimestamps are added after each blink ends)
+      // readyTimestamps[i] -> biteTimestamps[i+1] (for i from 0)
       let avgChewingTime = 0;
       let chewingIntervals = 0;
       
-      // readyTimestamps[0] is set after first bite's blink ends, so:
-      // readyTimestamps[0] -> biteTimestamps[1], readyTimestamps[1] -> biteTimestamps[2], etc.
-      const numIntervals = Math.min(readyTimestamps.length, biteTimestamps.length - 1);
+      // We can calculate chewing time for bites 2, 3, 4... 
+      // (first bite has readyTimestamps[0] = start, then biteTimestamps[0] = first press)
+      // So: readyTimestamps[0] -> biteTimestamps[0], readyTimestamps[1] -> biteTimestamps[1], etc.
+      const numIntervals = Math.min(readyTimestamps.length, biteTimestamps.length);
       
       if (numIntervals >= 1) {
         let totalChewingTime = 0;
         for (let i = 0; i < numIntervals; i++) {
-          totalChewingTime += (biteTimestamps[i + 1] - readyTimestamps[i]) / 1000;
+          totalChewingTime += (biteTimestamps[i] - readyTimestamps[i]) / 1000;
         }
         avgChewingTime = totalChewingTime / numIntervals;
         chewingIntervals = numIntervals;
