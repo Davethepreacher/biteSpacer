@@ -105,6 +105,39 @@
       border-color: var(--accent-blue);
     }
 
+    .header-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .end-btn {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.75rem 1rem;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: var(--light-red);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .end-btn:hover {
+      background: rgba(239, 68, 68, 0.3);
+      border-color: rgba(239, 68, 68, 0.6);
+    }
+
+    .end-btn:active {
+      transform: scale(0.98);
+    }
+
+    .end-btn.hidden {
+      display: none;
+    }
+
     /* Main content */
     .main-content {
       flex: 1;
@@ -285,6 +318,149 @@
       background: #2563eb;
     }
 
+    .summary-modal {
+      max-width: 340px;
+    }
+
+    .summary-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding: 1.25rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+    }
+
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .summary-message {
+      font-size: 1rem;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .summary-message.good {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--light-green);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .summary-message.bad {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--light-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Intro Modal */
+    .intro-modal {
+      max-width: 380px;
+      text-align: left;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .intro-modal h2 {
+      text-align: center;
+      margin-bottom: 0.25rem;
+    }
+
+    .intro-tagline {
+      text-align: center;
+      font-size: 1rem;
+      color: var(--light-green);
+      margin-bottom: 1.25rem;
+      font-weight: 500;
+    }
+
+    .intro-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .intro-rules {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .intro-rule {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .intro-icon {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+      width: 1.5rem;
+      text-align: center;
+    }
+
+    .intro-rule strong {
+      font-size: 0.95rem;
+      color: var(--text-primary);
+    }
+
+    .intro-rule p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+      line-height: 1.4;
+    }
+
+    .intro-why {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .intro-why strong {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+
+    .intro-why p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      line-height: 1.4;
+    }
+
+    .intro-cta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 1.25rem;
+      line-height: 1.4;
+    }
+
+    .intro-cta strong {
+      color: var(--text-primary);
+    }
+
     /* Footer stats */
     .footer {
       padding: 1.5rem;
@@ -314,7 +490,10 @@
 <body>
   <header class="header">
     <div id="timerDisplay" class="timer-display">00:00</div>
-    <button id="startBtn" class="start-btn">Start Lunch</button>
+    <div class="header-buttons">
+      <button id="endBtn" class="end-btn hidden">End</button>
+      <button id="startBtn" class="start-btn">Start Lunch</button>
+    </div>
   </header>
 
   <main class="main-content">
@@ -341,16 +520,97 @@
     </div>
   </div>
 
+  <!-- Summary Modal -->
+  <div id="summaryOverlay" class="modal-overlay">
+    <div class="modal summary-modal">
+      <h2>Meal Complete! 🍽️</h2>
+      <div class="summary-stats">
+        <div class="stat">
+          <span class="stat-label">Total Time</span>
+          <span id="summaryTime" class="stat-value">00:00</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Total Bites</span>
+          <span id="summaryBites" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Avg. Time Between Bites</span>
+          <span id="summaryAvg" class="stat-value">0s</span>
+        </div>
+      </div>
+      <p id="summaryMessage" class="summary-message"></p>
+      <div class="modal-buttons">
+        <button id="summaryClose" class="modal-btn confirm">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Intro Screen -->
+  <div id="introOverlay" class="modal-overlay visible">
+    <div class="modal intro-modal">
+      <h2>The BiteSpacer Method</h2>
+      <p class="intro-tagline">Eat slowly, lose weight naturally.</p>
+      
+      <p class="intro-subtitle">This app helps you master mindful eating through 3 simple rules:</p>
+      
+      <div class="intro-rules">
+        <div class="intro-rule">
+          <span class="intro-icon">🍴</span>
+          <div>
+            <strong>Savor each bite</strong>
+            <p>Keep food in your mouth for at least 10 seconds. Chew well and enjoy the taste.</p>
+          </div>
+        </div>
+        
+        <div class="intro-rule">
+          <span class="intro-icon">⏱️</span>
+          <div>
+            <strong>Space your bites</strong>
+            <p>Wait at least 15 seconds between each bite. The app guides you with the red light.</p>
+          </div>
+        </div>
+        
+        <div class="intro-rule">
+          <span class="intro-icon">🎯</span>
+          <div>
+            <strong>Respect meal duration</strong>
+            <p>A meal should last 20–25 minutes. The timer turns orange at 20 min, red at 25 min.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="intro-why">
+        <strong>Why does it work?</strong>
+        <p>Satiety naturally kicks in after 15–20 minutes. By slowing down, you'll feel full with less food — no willpower needed.</p>
+      </div>
+      
+      <p class="intro-cta"><strong>Start with one meal.</strong> Notice how you feel after. Then try a full day, then a week. The results will speak for themselves.</p>
+      
+      <div class="modal-buttons">
+        <button id="introClose" class="modal-btn confirm">Let's Go!</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Elements
     const timerDisplay = document.getElementById('timerDisplay');
     const startBtn = document.getElementById('startBtn');
+    const endBtn = document.getElementById('endBtn');
     const biteBtn = document.getElementById('biteBtn');
     const statusMessage = document.getElementById('statusMessage');
     const tipMessage = document.getElementById('tipMessage');
     const modalOverlay = document.getElementById('modalOverlay');
     const modalCancel = document.getElementById('modalCancel');
     const modalConfirm = document.getElementById('modalConfirm');
+    const summaryOverlay = document.getElementById('summaryOverlay');
+    const summaryTime = document.getElementById('summaryTime');
+    const summaryBites = document.getElementById('summaryBites');
+    const summaryAvg = document.getElementById('summaryAvg');
+    const summaryMessage = document.getElementById('summaryMessage');
+    const summaryClose = document.getElementById('summaryClose');
+    const introOverlay = document.getElementById('introOverlay');
+    const introClose = document.getElementById('introClose');
 
     // State
     let isLunchStarted = false;
@@ -361,6 +621,8 @@
     let timerInterval = null;
     let blinkInterval = null;
     let blinkTimeout = null;
+    let biteTimestamps = [];
+    let readyTimestamps = []; // When button turns green (ready for next bite)
 
     // Format time as MM:SS
     function formatTime(seconds) {
@@ -395,9 +657,12 @@
       isLunchStarted = true;
       isPaused = false;
       startTime = Date.now();
+      biteTimestamps = [];
+      readyTimestamps = [Date.now()]; // First ready moment is when lunch starts
       
-      startBtn.textContent = 'Stop';
+      startBtn.textContent = 'Restart';
       startBtn.classList.add('active');
+      endBtn.classList.remove('hidden');
       biteBtn.classList.remove('disabled');
       biteBtn.classList.add('ready');
       
@@ -421,6 +686,8 @@
       isPaused = false;
       startTime = null;
       pausedTime = 0;
+      biteTimestamps = [];
+      readyTimestamps = [];
       
       if (timerInterval) {
         clearInterval(timerInterval);
@@ -431,6 +698,7 @@
       
       startBtn.textContent = 'Start Lunch';
       startBtn.classList.remove('active');
+      endBtn.classList.add('hidden');
       biteBtn.classList.add('disabled');
       biteBtn.classList.remove('ready');
       
@@ -474,11 +742,79 @@
       modalOverlay.classList.remove('visible');
     }
 
+    // End lunch and show summary
+    function endLunch() {
+      if (!isLunchStarted) return;
+      
+      // Stop the timer
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      stopBlinking();
+      
+      // Calculate stats
+      const totalTime = getElapsedSeconds();
+      const totalBites = biteTimestamps.length;
+      
+      // Calculate average chewing time
+      // Chewing time = time between button turning green and next button press
+      // readyTimestamps[i] -> biteTimestamps[i+1] (for i from 0)
+      let avgChewingTime = 0;
+      let chewingIntervals = 0;
+      
+      // We can calculate chewing time for bites 2, 3, 4... 
+      // (first bite has readyTimestamps[0] = start, then biteTimestamps[0] = first press)
+      // So: readyTimestamps[0] -> biteTimestamps[0], readyTimestamps[1] -> biteTimestamps[1], etc.
+      const numIntervals = Math.min(readyTimestamps.length, biteTimestamps.length);
+      
+      if (numIntervals >= 1) {
+        let totalChewingTime = 0;
+        for (let i = 0; i < numIntervals; i++) {
+          totalChewingTime += (biteTimestamps[i] - readyTimestamps[i]) / 1000;
+        }
+        avgChewingTime = totalChewingTime / numIntervals;
+        chewingIntervals = numIntervals;
+      }
+      
+      // Update summary modal
+      summaryTime.textContent = formatTime(totalTime);
+      summaryBites.textContent = totalBites;
+      summaryAvg.textContent = chewingIntervals >= 1 ? `${Math.round(avgChewingTime)}s` : '--';
+      
+      // Set message based on average chewing time
+      if (chewingIntervals < 1) {
+        summaryMessage.textContent = "Not enough bites to calculate your pace. Try to use the button after each bite next time!";
+        summaryMessage.classList.remove('good', 'bad');
+        summaryMessage.classList.add('bad');
+      } else if (avgChewingTime >= 10) {
+        summaryMessage.textContent = "Excellent! You're mastering the art of mindful eating. Your body thanks you for taking your time! 🌟";
+        summaryMessage.classList.remove('bad');
+        summaryMessage.classList.add('good');
+      } else {
+        summaryMessage.textContent = "Slow down, champion! Your fork isn't running away. Try to savor each bite a little longer next time.";
+        summaryMessage.classList.remove('good');
+        summaryMessage.classList.add('bad');
+      }
+      
+      // Show summary modal
+      summaryOverlay.classList.add('visible');
+    }
+
+    // Close summary and reset
+    function closeSummary() {
+      summaryOverlay.classList.remove('visible');
+      stopLunch();
+    }
+
     // Start blinking
     function startBlinking() {
       if (isBlinking || !isLunchStarted) return;
       
       isBlinking = true;
+      
+      // Record bite timestamp (moment of button press)
+      biteTimestamps.push(Date.now());
       
       biteBtn.classList.remove('ready');
       biteBtn.classList.add('on');
@@ -494,6 +830,10 @@
       blinkTimeout = setTimeout(() => {
         stopBlinking();
         biteBtn.classList.add('ready');
+        
+        // Record when button turns green (ready for next bite)
+        readyTimestamps.push(Date.now());
+        
         statusMessage.textContent = 'Ready for your next bite';
         statusMessage.classList.remove('waiting');
         
@@ -542,6 +882,21 @@
       stopLunch();
       startLunch();
     });
+
+    endBtn.addEventListener('click', endLunch);
+
+    summaryClose.addEventListener('click', closeSummary);
+
+    // Intro close
+    introClose.addEventListener('click', () => {
+      introOverlay.classList.remove('visible');
+      localStorage.setItem('biteSpacer_introSeen', 'true');
+    });
+
+    // Check if intro was already seen
+    if (localStorage.getItem('biteSpacer_introSeen') === 'true') {
+      introOverlay.classList.remove('visible');
+    }
 
     // Close modal on overlay click
     modalOverlay.addEventListener('click', (e) => {
