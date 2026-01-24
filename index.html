@@ -449,6 +449,26 @@
       line-height: 1.4;
     }
 
+    .intro-warning {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .intro-warning strong {
+      font-size: 0.9rem;
+      color: var(--light-red);
+    }
+
+    .intro-warning p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      line-height: 1.4;
+    }
+
     .intro-cta {
       font-size: 0.85rem;
       color: var(--text-muted);
@@ -461,17 +481,63 @@
       color: var(--text-primary);
     }
 
+    .intro-checkbox {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      cursor: pointer;
+    }
+
+    .intro-checkbox input {
+      width: 1rem;
+      height: 1rem;
+      accent-color: var(--accent-blue);
+      cursor: pointer;
+    }
+
     /* Footer stats */
     .footer {
       padding: 1.5rem;
       text-align: center;
       flex-shrink: 0;
+      position: relative;
     }
 
     .copyright {
       font-size: 0.7rem;
       color: var(--text-muted);
       opacity: 0.6;
+    }
+
+    .help-btn {
+      position: absolute;
+      right: 1.25rem;
+      bottom: 1.25rem;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .help-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: var(--text-primary);
+    }
+
+    .help-btn:active {
+      transform: scale(0.95);
     }
 
     /* Safe area for notched phones */
@@ -506,6 +572,7 @@
 
   <footer class="footer">
     <p class="copyright">Bite Spacer by David Raichman © 2026</p>
+    <button id="helpBtn" class="help-btn">?</button>
   </footer>
 
   <!-- Restart Modal -->
@@ -551,7 +618,7 @@
       <h2>The BiteSpacer Method</h2>
       <p class="intro-tagline">Eat slowly, lose weight naturally.</p>
       
-      <p class="intro-subtitle">This app helps you master mindful eating through 3 simple rules:</p>
+      <p class="intro-subtitle">This app helps you master mindful eating through 4 simple rules:</p>
       
       <div class="intro-rules">
         <div class="intro-rule">
@@ -577,14 +644,25 @@
             <p>A meal should last 20–25 minutes. The timer turns orange at 20 min, red at 25 min.</p>
           </div>
         </div>
+        
+        <div class="intro-rule">
+          <span class="intro-icon">🥗</span>
+          <div>
+            <strong>Eat balanced</strong>
+            <p>Aim for 50% vegetables, 25% protein, 25% carbs. Prefer whole, unprocessed foods. Nothing is forbidden — even dessert! — as long as it fits within your 20-minute meal.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="intro-warning">
+        <strong>⚠️ One golden rule</strong>
+        <p>If it can't be eaten in at least 20 minutes, it shouldn't be eaten at all. Snacking should no longer be part of your eating habits.</p>
       </div>
       
       <div class="intro-why">
         <strong>Why does it work?</strong>
         <p>Satiety naturally kicks in after 15–20 minutes. By slowing down, you'll feel full with less food — no willpower needed.</p>
       </div>
-      
-      <p class="intro-cta"><strong>Start with one meal.</strong> Notice how you feel after. Then try a full day, then a week. The results will speak for themselves.</p>
       
       <div class="modal-buttons">
         <button id="introClose" class="modal-btn confirm">Let's Go!</button>
@@ -611,6 +689,11 @@
     const summaryClose = document.getElementById('summaryClose');
     const introOverlay = document.getElementById('introOverlay');
     const introClose = document.getElementById('introClose');
+    const helpBtn = document.getElementById('helpBtn');
+    
+    // Track when help was opened to pause chewing time calculation
+    let helpOpenedAt = null;
+    const introDoNotShow = document.getElementById('introDoNotShow');
 
     // State
     let isLunchStarted = false;
@@ -890,13 +973,23 @@
     // Intro close
     introClose.addEventListener('click', () => {
       introOverlay.classList.remove('visible');
-      localStorage.setItem('biteSpacer_introSeen', 'true');
+      // If help was opened during a meal, adjust the last ready timestamp
+      if (helpOpenedAt && isLunchStarted && readyTimestamps.length > 0) {
+        const pauseDuration = Date.now() - helpOpenedAt;
+        // Adjust the last ready timestamp to account for pause
+        readyTimestamps[readyTimestamps.length - 1] += pauseDuration;
+      }
+      helpOpenedAt = null;
     });
 
-    // Check if intro was already seen
-    if (localStorage.getItem('biteSpacer_introSeen') === 'true') {
-      introOverlay.classList.remove('visible');
-    }
+    // Help button to show intro again (pauses bite tracking)
+    helpBtn.addEventListener('click', () => {
+      introOverlay.classList.add('visible');
+      // Track when help was opened to pause chewing time calculation
+      if (isLunchStarted) {
+        helpOpenedAt = Date.now();
+      }
+    });
 
     // Close modal on overlay click
     modalOverlay.addEventListener('click', (e) => {
