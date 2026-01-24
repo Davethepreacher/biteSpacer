@@ -865,20 +865,35 @@
       summaryBites.textContent = totalBites;
       summaryAvg.textContent = chewingIntervals >= 1 ? `${Math.round(avgChewingTime)}s` : '--';
       
-      // Set message based on average chewing time
-      if (chewingIntervals < 1) {
-        summaryMessage.textContent = "Not enough bites to calculate your pace. Try to use the button after each bite next time!";
-        summaryMessage.classList.remove('good', 'bad');
-        summaryMessage.classList.add('bad');
-      } else if (avgChewingTime >= 10) {
-        summaryMessage.textContent = "Excellent! You're mastering the art of mindful eating. Your body thanks you for taking your time! 🌟";
-        summaryMessage.classList.remove('bad');
-        summaryMessage.classList.add('good');
-      } else {
-        summaryMessage.textContent = "Slow down, champion! Your fork isn't running away. Try to savor each bite a little longer next time.";
-        summaryMessage.classList.remove('good');
-        summaryMessage.classList.add('bad');
+      // Build message based on chewing time and meal duration
+      let message = '';
+      let isGood = true;
+      
+      // Check meal duration first
+      const totalMinutes = totalTime / 60;
+      if (totalMinutes < 20) {
+        message += "Your meal was too short! Aim for at least 20 minutes to let satiety kick in. ";
+        isGood = false;
       }
+      
+      // Check chewing pace
+      if (chewingIntervals < 1) {
+        message += "Not enough bites to calculate your pace. Try to use the button after each bite next time!";
+        isGood = false;
+      } else if (avgChewingTime >= 10) {
+        if (isGood) {
+          message = "Excellent! You're mastering the art of mindful eating. Your body thanks you for taking your time! 🌟";
+        } else {
+          message += "But your chewing pace was good — keep it up!";
+        }
+      } else {
+        message += "Slow down, champion! Your fork isn't running away. Try to savor each bite a little longer next time.";
+        isGood = false;
+      }
+      
+      summaryMessage.textContent = message;
+      summaryMessage.classList.remove('good', 'bad');
+      summaryMessage.classList.add(isGood ? 'good' : 'bad');
       
       // Show summary modal
       summaryOverlay.classList.add('visible');
