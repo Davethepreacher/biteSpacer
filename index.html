@@ -504,40 +504,12 @@
       padding: 1.5rem;
       text-align: center;
       flex-shrink: 0;
-      position: relative;
     }
 
     .copyright {
       font-size: 0.7rem;
       color: var(--text-muted);
       opacity: 0.6;
-    }
-
-    .help-btn {
-      position: absolute;
-      right: 1.25rem;
-      bottom: 1.25rem;
-      width: 2rem;
-      height: 2rem;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-muted);
-      font-family: 'Outfit', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .help-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.3);
-      color: var(--text-primary);
-    }
-
-    .help-btn:active {
-      transform: scale(0.95);
     }
 
     /* Safe area for notched phones */
@@ -572,7 +544,6 @@
 
   <footer class="footer">
     <p class="copyright">Bite Spacer by David Raichman © 2026</p>
-    <button id="helpBtn" class="help-btn">?</button>
   </footer>
 
   <!-- Restart Modal -->
@@ -689,10 +660,6 @@
     const summaryClose = document.getElementById('summaryClose');
     const introOverlay = document.getElementById('introOverlay');
     const introClose = document.getElementById('introClose');
-    const helpBtn = document.getElementById('helpBtn');
-    
-    // Track when help was opened to pause chewing time calculation
-    let helpOpenedAt = null;
     const introDoNotShow = document.getElementById('introDoNotShow');
 
     // State
@@ -741,7 +708,7 @@
       isPaused = false;
       startTime = Date.now();
       biteTimestamps = [];
-      readyTimestamps = [Date.now()]; // First ready moment is when lunch starts
+      readyTimestamps = []; // Don't add initial ready timestamp - wait for first bite
       
       startBtn.textContent = 'Restart';
       startBtn.classList.add('active');
@@ -842,19 +809,18 @@
       
       // Calculate average chewing time
       // Chewing time = time between button turning green and next button press
-      // readyTimestamps[i] -> biteTimestamps[i+1] (for i from 0)
+      // Only count intervals after the first bite (readyTimestamps are added after each blink ends)
       let avgChewingTime = 0;
       let chewingIntervals = 0;
       
-      // We can calculate chewing time for bites 2, 3, 4... 
-      // (first bite has readyTimestamps[0] = start, then biteTimestamps[0] = first press)
-      // So: readyTimestamps[0] -> biteTimestamps[0], readyTimestamps[1] -> biteTimestamps[1], etc.
-      const numIntervals = Math.min(readyTimestamps.length, biteTimestamps.length);
+      // readyTimestamps[0] is set after first bite's blink ends, so:
+      // readyTimestamps[0] -> biteTimestamps[1], readyTimestamps[1] -> biteTimestamps[2], etc.
+      const numIntervals = Math.min(readyTimestamps.length, biteTimestamps.length - 1);
       
       if (numIntervals >= 1) {
         let totalChewingTime = 0;
         for (let i = 0; i < numIntervals; i++) {
-          totalChewingTime += (biteTimestamps[i] - readyTimestamps[i]) / 1000;
+          totalChewingTime += (biteTimestamps[i + 1] - readyTimestamps[i]) / 1000;
         }
         avgChewingTime = totalChewingTime / numIntervals;
         chewingIntervals = numIntervals;
@@ -988,22 +954,6 @@
     // Intro close
     introClose.addEventListener('click', () => {
       introOverlay.classList.remove('visible');
-      // If help was opened during a meal, adjust the last ready timestamp
-      if (helpOpenedAt && isLunchStarted && readyTimestamps.length > 0) {
-        const pauseDuration = Date.now() - helpOpenedAt;
-        // Adjust the last ready timestamp to account for pause
-        readyTimestamps[readyTimestamps.length - 1] += pauseDuration;
-      }
-      helpOpenedAt = null;
-    });
-
-    // Help button to show intro again (pauses bite tracking)
-    helpBtn.addEventListener('click', () => {
-      introOverlay.classList.add('visible');
-      // Track when help was opened to pause chewing time calculation
-      if (isLunchStarted) {
-        helpOpenedAt = Date.now();
-      }
     });
 
     // Close modal on overlay click
